@@ -53,17 +53,15 @@ quick_entry_point(void)
   ctx->input = arena_push_struct(game_memory, G_InputState);;
   SDL_Require(SDL_StartTextInput(ctx->window));
 
-  ctx->font = arena_push_struct(game_memory, FontAtlas);
+  ctx->font = arena_push_struct(game_memory, G_FontAtlas);
   ctx->font->tex = IMG_LoadTexture(ctx->renderer, "../assets/proggy.png");
   SDL_Require(ctx->font->tex);
-  ctx->font->glyph_width  = 32;
+  ctx->font->glyph_width = 32;
   ctx->font->glyph_height = 32;
-  ctx->font->columns      = 16;
-  ctx->font->first_char   = 32;
-  ctx->font->kerning      = 14;
-  ctx->font->offset       = 3;
-
-  ctx->circle = IMG_LoadTexture(ctx->renderer, "../assets/circle.png");
+  ctx->font->columns = 16;
+  ctx->font->first_char = 32;
+  ctx->font->kerning = 14;
+  ctx->font->offset = 3;
   SDL_SetTextureScaleMode(ctx->font->tex, SDL_SCALEMODE_NEAREST);
 
   UI_Context *ui = arena_push_struct(game_memory, UI_Context);
@@ -82,13 +80,13 @@ quick_entry_point(void)
   state->line_pos_x2 = state->line_pos_x1;
   state->line_pos_y2 = state->line_pos_y1 + state->outer_boundary_height;
 
-  SDL_AudioSpec spec = {};
-  spec.format = SDL_AUDIO_S16;
-  spec.freq = AUDIO_SAMPLE_RATE;
-  spec.channels = AudioChannel_Mono;
+  ctx->audio_spec = arena_push_struct(game_memory, SDL_AudioSpec);
+  ctx->audio_spec->format = SDL_AUDIO_S16;
+  ctx->audio_spec->freq = AUDIO_SAMPLE_RATE;
+  ctx->audio_spec->channels = AudioChannel_Mono;
 
   SDL_AudioStream *audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
-                                                            &spec,
+                                                            ctx->audio_spec,
                                                             audio_callback,
                                                             0);
   SDL_ResumeAudioStreamDevice(audio_stream);
@@ -99,13 +97,13 @@ quick_entry_point(void)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-      g_dispatch_event(ctx, &event);
+      g_dispatch_event(ctx->input, &event);
     }
 
-    local_persist U64 g_last_frame_time = 0;
+    local_persist U64 last_frame_time = 0;
     U64 current_frame_time = SDL_GetPerformanceCounter();
-    F32 dt = (F32)(current_frame_time - g_last_frame_time) / (F32)SDL_GetPerformanceFrequency();
-    g_last_frame_time = current_frame_time;
+    F32 dt = (F32)(current_frame_time - last_frame_time) / (F32)SDL_GetPerformanceFrequency();
+    last_frame_time = current_frame_time;
 
     ui_begin_frame(ui, ctx);
     g_update(ctx, state, dt);
