@@ -1,12 +1,16 @@
 //~ Includes [h]
 #include "base/base_inc.h"
 #include "win32/win32_inc.h"
+#include "input/input.h"
+#include "audio/audio_inc.h"
 #include "render/render_inc.h"
 #include "ui/ui_inc.h"
 
 //~ Includes [c]
 #include "base/base_inc.c"
 #include "win32/win32_inc.c"
+#include "input/input.c"
+#include "audio/audio.c"
 #include "render/render_inc.c"
 #include "ui/ui_inc.c"
 #include "quick_main.c"

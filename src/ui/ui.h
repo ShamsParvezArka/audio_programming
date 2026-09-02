@@ -55,7 +55,7 @@ struct UI_Style
 typedef struct UI_Context UI_Context;
 struct UI_Context
 {
-  FontAtlas *font;
+  G_FontAtlas *font;
 
   UI_Style style;
   UI_ID hot;
