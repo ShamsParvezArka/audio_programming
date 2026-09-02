@@ -3,6 +3,8 @@
 
 extern B32 running;
 
+global I32 octave_shift = 0.0;
+
 typedef enum AudioChannel AudioChannel;
 enum AudioChannel
 {
@@ -41,8 +43,9 @@ internal void
 audio_callback(void *userdata, SDL_AudioStream *stream, I32 additional_amount, I32 total_amount)
 {
   additional_amount /= sizeof(I16);
-  I16 buffer[4096 * 4];
-  I32 n = additional_amount < 4096 * 4 ? additional_amount : 4096 * 4;
+  I16 buffer[4096];
+  I32 n = additional_amount < 4096 ? additional_amount : 4096;
+  F32 octave_mul = powf(2.0f, (F32)octave_shift);
 
   for (I32 i = 0; i < n; i++)
   {
@@ -58,7 +61,7 @@ audio_callback(void *userdata, SDL_AudioStream *stream, I32 additional_amount, I
       if (note->amplitude > 0.0f || note->active)
       {
         mixed += sinf(note->phase) * note->amplitude * NOTE_VOICE_GAIN;
-        note->phase += note->frequency * PI * 2.0f / AUDIO_SAMPLE_RATE;
+        note->phase += note->frequency *octave_mul * PI * 2.0f / AUDIO_SAMPLE_RATE;
 
         if (note->phase >= PI * 2.0f)
         {
@@ -162,23 +165,88 @@ g_dispatch_event(G_Context *ctx, SDL_Event *event)
   }
 }
 
+global F32 accumulated_time = 0.0f;
+global F64 frame_count = 0;
+global U64 smooth_fps = 0;
+
 internal void
 g_update(G_Context *ctx, G_State *state, F32 delta_time)
 {
-  F32 s_pos_x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
-  F32 e_pos_x = s_pos_x + state->outer_boundary_width;
-  if (state->line_pos_x1 >= e_pos_x)
+  accumulated_time += delta_time;
+  frame_count++;
+  if (accumulated_time >= 0.25)
   {
-    state->line_pos_x1 = s_pos_x;
-    state->line_pos_x2 = s_pos_x;
+    smooth_fps = (U32)(ceil(frame_count / accumulated_time));
+    accumulated_time = 0.0f;
+    frame_count = 0;
+  }
+
+  state->outer_boundary_width = ctx->window_width * 0.8f;
+  state->outer_boundary_height = ctx->window_height * 0.9f;
+
+  F32 start_pos_x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
+  F32 end_pos_x = start_pos_x + state->outer_boundary_width;
+  if (state->line_pos_x1 >= end_pos_x)
+  {
+    state->line_pos_x1 = start_pos_x;
+    state->line_pos_x2 = start_pos_x;
   }
   state->line_pos_x1 += 600.0f * delta_time;
   state->line_pos_x2 += 600.0f * delta_time;
+  state->line_pos_y1 = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
+  state->line_pos_y2 = state->line_pos_y1 + state->outer_boundary_height;
 
   G_InputState *in = ctx->input;
+  if (in->kbd_down[G_InputMap_OctaveUpShifter])
+  {
+    octave_shift = 1;
+  }
+  else
+  {
+    octave_shift = 0;
+  }
+
   for (U64 idx = 0; idx < array_count(audio_note_lookup); idx++)
   {
     audio_note_lookup[idx].active = in->kbd_down[audio_note_lookup[idx].associated_key];
+  }
+
+  for (U64 idx = 0; idx < state->circle_count; idx++)
+  {
+    state->circle_lifetime[idx] += delta_time;
+  }
+  for (U64 idx = 0; idx < state->circle_count;)
+  {
+    if (state->circle_lifetime[idx] >= MAX_CIRCLE_LIFETIME)
+    {
+      U64 last = state->circle_count - 1;
+      state->circle_x[idx] = state->circle_x[last];
+      state->circle_y[idx] = state->circle_y[last];
+      state->circle_lifetime[idx] = state->circle_lifetime[last];
+      state->circle_count--;
+    }
+    else
+    {
+      idx++;
+    }
+  }
+
+  local_persist B32 was_down[array_count(audio_note_lookup)] = {};
+  for (U64 idx = 0; idx < array_count(audio_note_lookup); idx++)
+  {
+    B32 down = in->kbd_down[audio_note_lookup[idx].associated_key];
+
+    if (down && !was_down[idx])
+    {
+      if (state->circle_count < MAX_SPAWNED_CIRCLE)
+      {
+        state->circle_x[state->circle_count] = state->line_pos_x1;
+        state->circle_y[state->circle_count] = state->line_pos_y1 + state->outer_boundary_height - 50.0f * (F32)idx - 50;
+        state->circle_lifetime[state->circle_count] = 0.0f;
+        state->circle_count++;
+      }
+    }
+    was_down[idx] = down;
   }
 }
 
@@ -201,21 +269,43 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
   SDL_SetRenderDrawColor(ctx->renderer, 255.0f, 255.0f, 255.0f, 255.0f);
   SDL_RenderRect(ctx->renderer, &outer_boundary);
 
+  SDL_SetRenderDrawColor(ctx->renderer, 255.0f, 255.0f, 255.0f, 100.0f);
   for (U64 idx = 0; idx < 4; idx++)
   {
     F32 x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
     F32 y = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
     F32 offset = state->outer_boundary_width / 4.0f;
     SDL_RenderLine(ctx->renderer,
-                   x + (offset * idx),
-                   y,
-                   x + (offset * idx),
-                   y + state->outer_boundary_height);
+                   x + (offset * idx), y,
+                   x + (offset * idx), y + state->outer_boundary_height);
   }
 
   SDL_RenderLine(ctx->renderer,
                  state->line_pos_x1, state->line_pos_y1,
                  state->line_pos_x2, state->line_pos_y2);
+
+
+  for (U64 idx = 0; idx < state->circle_count; idx++)
+  {
+    F32 t = state->circle_lifetime[idx] / MAX_CIRCLE_LIFETIME;
+    F32 expand_coefficient = 1.0f + t;
+    F32 opacity = lerp(255.0f, 0.0f, t);
+    F32 radius = 20.0f;
+
+    if (idx % 2 == 0)
+    {
+      SDL_SetRenderDrawColor(ctx->renderer, 9.0f, 90.0f, 177.0f, opacity);
+    }
+    else
+    {
+      SDL_SetRenderDrawColor(ctx->renderer, 162.0f, 53.0f, 55.0f, opacity);
+    }
+
+    g_draw_circle_ex(ctx,
+                     state->circle_x[idx] - radius, state->circle_y[idx],
+                     radius * expand_coefficient,
+                     10.0f);
+  }
 
 #define FONT_TEST 0
 #if FONT_TEST
@@ -233,6 +323,22 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
   ////////////////////////////////
   // NOTE: UI rendering
   //
+  ui_begin_panel(ui, ctx, string_lit("debug panel"), 30.0f, 30.0f);
+  {
+    ui_label(ui, ctx, string_lit(c_str_fmt("delta: %.4f", delta_time)));
+    ui_label(ui, ctx, string_lit(c_str_fmt("fps: %d", smooth_fps)));
+    if (octave_shift > 0)
+    {
+      ui_label(ui, ctx, string_lit(c_str_fmt("Octave: +%d", octave_shift)));
+    }
+    else
+    {
+      ui_label(ui, ctx, string_lit(c_str_fmt("Octave: %d", octave_shift)));
+    }
+
+  }
+  ui_end_panel(ui, ctx);
+
 
   SDL_RenderPresent(ctx->renderer);
 }
@@ -312,6 +418,45 @@ g_draw_circle(G_Context *ctx, I32 center_x, I32 center_y, I32 radius)
     {
       x--;
       midpoint -= 2*x + 1;
+    }
+  }
+}
+
+internal void
+g_draw_circle_ex(G_Context *ctx, I32 center_x, I32 center_y, I32 radius, I32 thickness)
+{
+  I32 outer_r = radius + thickness / 2;
+  I32 inner_r = radius - thickness / 2;
+  if (inner_r < 0)
+  {
+    inner_r = 0;
+  }
+
+  I32 outer_r2 = outer_r * outer_r;
+  I32 inner_r2 = inner_r * inner_r;
+
+  for (I32 y = -outer_r; y <= outer_r; y++)
+  {
+    I32 y2 = y * y;
+
+    // outer boundary at this row
+    I32 outer_dx2 = outer_r2 - y2;
+    if (outer_dx2 < 0) continue;
+    I32 outer_dx = (I32)sqrtf((F32)outer_dx2);
+
+    // inner boundary at this row (0 if this row is above/below the inner circle entirely)
+    I32 inner_dx = 0;
+    I32 inner_dx2 = inner_r2 - y2;
+    if (inner_dx2 > 0)
+    {
+      inner_dx = (I32)sqrtf((F32)inner_dx2);
+    }
+
+    // right side of the ring: from inner_dx to outer_dx
+    for (I32 x = inner_dx; x <= outer_dx; x++)
+    {
+      SDL_RenderPoint(ctx->renderer, center_x + x, center_y + y);
+      SDL_RenderPoint(ctx->renderer, center_x - x, center_y + y);
     }
   }
 }

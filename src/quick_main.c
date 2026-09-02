@@ -13,9 +13,9 @@ quick_entry_point(void)
   Arena *game_memory = arena_alloc(MB(50));
 
   G_Config *game_config = arena_push_struct(game_memory, G_Config);
-  game_config->r = 43;
-  game_config->g = 41;
-  game_config->b = 51;
+  game_config->r = 24;
+  game_config->g = 24;
+  game_config->b = 24;
   game_config->a = 255;
 
   G_Context *ctx = arena_push_struct(game_memory, G_Context);
@@ -32,6 +32,7 @@ quick_entry_point(void)
                               flags,
                               &ctx->window,
                               &ctx->renderer);
+  SDL_SetRenderVSync(ctx->renderer, 1);
   SDL_SetRenderDrawBlendMode(ctx->renderer, SDL_BLENDMODE_BLEND);
 
   I32 actual_window_width = 0;
@@ -61,6 +62,8 @@ quick_entry_point(void)
   ctx->font->first_char   = 32;
   ctx->font->kerning      = 14;
   ctx->font->offset       = 3;
+
+  ctx->circle = IMG_LoadTexture(ctx->renderer, "../assets/circle.png");
   SDL_SetTextureScaleMode(ctx->font->tex, SDL_SCALEMODE_NEAREST);
 
   UI_Context *ui = arena_push_struct(game_memory, UI_Context);
@@ -71,8 +74,9 @@ quick_entry_point(void)
   state->camera = arena_push_struct(game_memory, G_Camera);
   state->camera->zoom = 1.0f;
   state->camera->zoom_target = 1.0f;
+
   state->outer_boundary_width = ctx->window_width * 0.8f;
-  state->outer_boundary_height = ctx->window_height * 0.8f;
+  state->outer_boundary_height = ctx->window_height * 0.9f;
   state->line_pos_x1 = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
   state->line_pos_y1 = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
   state->line_pos_x2 = state->line_pos_x1;

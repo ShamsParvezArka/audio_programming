@@ -53,7 +53,6 @@ struct G_InputState
   U8 ascii_char;
 };
 
-
 typedef struct G_Context G_Context;
 struct G_Context
 {
@@ -64,6 +63,7 @@ struct G_Context
   SDL_Renderer *renderer;
   G_InputState *input;
   G_Config     *config;
+  SDL_Texture  *circle;
 
   I32 window_width;
   I32 window_height;
@@ -87,6 +87,9 @@ struct G_Camera
   F32 zoom_target;
 };
 
+#define MAX_SPAWNED_CIRCLE 1024
+#define MAX_CIRCLE_LIFETIME 0.50f
+
 typedef struct G_State G_State;
 struct G_State
 {
@@ -98,6 +101,11 @@ struct G_State
   F32 line_pos_y1;
   F32 line_pos_x2;
   F32 line_pos_y2;
+
+  F32 circle_x[MAX_SPAWNED_CIRCLE];
+  F32 circle_y[MAX_SPAWNED_CIRCLE];
+  F32 circle_lifetime[MAX_SPAWNED_CIRCLE];
+  U64 circle_count;
 };
 
 typedef enum G_InputMap G_InputMap;
@@ -115,7 +123,9 @@ enum G_InputMap
   G_InputMap_A4  = SDL_SCANCODE_N,
   G_InputMap_As4 = SDL_SCANCODE_J,
   G_InputMap_B4  = SDL_SCANCODE_M,
-  G_InputMap_C5  = SDL_SCANCODE_COMMA
+  G_InputMap_C5  = SDL_SCANCODE_COMMA,
+  G_InputMap_OctaveUpShifter = SDL_SCANCODE_BACKSLASH,
+  G_InputMap_OctaveDownShifter = SDL_SCANCODE_RETURN
 };
 
 typedef struct UI_Context UI_Context;
@@ -128,5 +138,7 @@ internal void g_quit(G_Context *ctx);
 internal void g_draw_char(G_Context *ctx, U8 c, F32 x, F32 y, U32 font_size);
 internal void g_draw_text(G_Context *ctx, String s, F32 x, F32 y, U32 font_size);
 internal void g_draw_circle(G_Context *ctx, I32 center_x, I32 center_y, I32 radius);
+internal void g_draw_circle_ex(G_Context *ctx, I32 center_x, I32 center_y, I32 radius, I32 thickness);
+
 
 #endif // COMMON_H
