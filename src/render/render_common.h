@@ -1,6 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#define MAX_SPAWNED_CIRCLE 1024
+#define MAX_CIRCLE_LIFETIME 0.75f
+
 #define SDL_Require(expr)                               \
   do {                                                  \
     if (!(expr))                                        \
@@ -67,14 +70,13 @@ struct G_Camera
   F32 zoom_target;
 };
 
-#define MAX_SPAWNED_CIRCLE 1024
-#define MAX_CIRCLE_LIFETIME 0.50f
-
 typedef struct G_State G_State;
 struct G_State
 {
   G_Camera *camera;
 
+  F32 outer_boundary_x;
+  F32 outer_boundary_y;
   F32 outer_boundary_width;
   F32 outer_boundary_height;
   F32 line_pos_x1;

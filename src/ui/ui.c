@@ -332,7 +332,7 @@ ui_begin_panel(UI_Context *ui, G_Context *ctx, String title, F32 default_x, F32 
 
   F32 width = panel->width;
   F32 height = panel->height;
-  F32 title_bar_height = 28.0f;
+  F32 title_bar_height = UI_DEFAULT_PANEL_TITLE_BAR_HEIGHT;
   SDL_FRect title_rect = {panel->x, panel->y, width, title_bar_height};
 
   B32 hot    = false;

@@ -8,11 +8,13 @@
 
 #define UI_DEFAULT_PANEL_WIDTH 320
 #define UI_DEFAULT_PANEL_HEIGHT 280
+#define UI_DEFAULT_PANEL_TITLE_BAR_HEIGHT 28
 
-#define UI_PADDING        8.0f
-#define UI_FONT_SIZE     22.0f
+#ifndef UI_FONT_SIZE
+#  define UI_FONT_SIZE 22.0f
+#endif
+#define UI_PADDING 8.0f
 #define UI_WIDGET_HEIGHT 28.0f
-
 #define UI_MAX_PANELS 16
 
 typedef U64 UI_ID;

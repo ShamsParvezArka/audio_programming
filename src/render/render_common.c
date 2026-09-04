@@ -15,10 +15,7 @@ g_update(G_Context *ctx, G_State *state, F32 delta_time)
     frame_count = 0;
   }
 
-  state->outer_boundary_width = ctx->window_width * 0.8f;
-  state->outer_boundary_height = ctx->window_height * 0.9f;
-
-  F32 start_pos_x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
+  F32 start_pos_x = state->outer_boundary_x;
   F32 end_pos_x = start_pos_x + state->outer_boundary_width;
   if (state->line_pos_x1 >= end_pos_x)
   {
@@ -27,7 +24,7 @@ g_update(G_Context *ctx, G_State *state, F32 delta_time)
   }
   state->line_pos_x1 += 600.0f * delta_time;
   state->line_pos_x2 += 600.0f * delta_time;
-  state->line_pos_y1 = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
+  state->line_pos_y1 = state->outer_boundary_y;
   state->line_pos_y2 = state->line_pos_y1 + state->outer_boundary_height;
 
   G_InputState *in = ctx->input;
@@ -48,7 +45,6 @@ g_update(G_Context *ctx, G_State *state, F32 delta_time)
   {
     audio_note_lookup[idx].active = in->kbd_down[audio_note_lookup[idx].associated_key];
   }
-
   for (U64 idx = 0; idx < state->circle_count; idx++)
   {
     state->circle_lifetime[idx] += delta_time;
@@ -91,34 +87,39 @@ g_update(G_Context *ctx, G_State *state, F32 delta_time)
 internal void
 g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
 {
+  G_InputState *in = ctx->input;
+
   ////////////////////////////////
   // NOTE(arka): Game rendering
   //
   SDL_SetRenderDrawColor(ctx->renderer, ctx->config->r, ctx->config->g, ctx->config->b, ctx->config->a);
   SDL_RenderClear(ctx->renderer);
 
-  SDL_FRect outer_boundary =
+  // NOTE(arka): boundary rendering
+  SDL_FRect outer_boundary_rect =
   {
-    .x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f,
-    .y = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f,
+    .x = state->outer_boundary_x,
+    .y = state->outer_boundary_y,
     .w = state->outer_boundary_width,
     .h = state->outer_boundary_height
   };
 
   SDL_SetRenderDrawColor(ctx->renderer, 255.0f, 255.0f, 255.0f, 255.0f);
-  SDL_RenderRect(ctx->renderer, &outer_boundary);
+  SDL_RenderRect(ctx->renderer, &outer_boundary_rect);
 
+  // NOTE(arka): horizontal lines
   SDL_SetRenderDrawColor(ctx->renderer, 255.0f, 255.0f, 255.0f, 100.0f);
   for (U64 idx = 0; idx < 4; idx++)
   {
-    F32 x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
-    F32 y = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
+    F32 x = outer_boundary_rect.x;
+    F32 y = outer_boundary_rect.y;
     F32 offset = state->outer_boundary_width / 4.0f;
     SDL_RenderLine(ctx->renderer,
                    x + (offset * idx), y,
                    x + (offset * idx), y + state->outer_boundary_height);
   }
 
+  // NOTE(arka): horizontal moving line rendering
   SDL_RenderLine(ctx->renderer,
                  state->line_pos_x1, state->line_pos_y1,
                  state->line_pos_x2, state->line_pos_y2);
@@ -126,20 +127,23 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
   ////////////////////////////////
   // NOTE(arka): audio note circle rendering part
   //
+  B32 is_red = 0;
   for (U64 idx = 0; idx < state->circle_count; idx++)
   {
     F32 t = state->circle_lifetime[idx] / MAX_CIRCLE_LIFETIME;
-    F32 expand_coefficient = 1.0f + t;
+    F32 expand_coefficient = 1.0f + t * 2;
     F32 opacity = lerp(255.0f, 0.0f, t);
     F32 radius = 20.0f;
 
-    if (idx % 2 == 0)
+    if (is_red)
     {
       SDL_SetRenderDrawColor(ctx->renderer, 9.0f, 90.0f, 177.0f, opacity);
+      is_red = 0;
     }
     else
     {
       SDL_SetRenderDrawColor(ctx->renderer, 162.0f, 53.0f, 55.0f, opacity);
+      is_red = 1;
     }
 
     g_draw_circle_ex(ctx,
@@ -148,42 +152,32 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
                      10.0f);
   }
 
-#ifndef FONT_TEST
-#  define FONT_TEST 0
-#endif
-#if FONT_TEST
-  F32 font_size = 22.0f;
-  G_DrawText(ctx,
-             string_lit("The quick borwn fox jumps over the lazy dog"),
-             20.0f, 20.0f,
-             font_size);
-  G_DrawText(ctx,
-             string_lit("1234567890!@#$%^&*()-+_/<>:\"\\|~`"),
-             20.0f, 70.0f,
-             font_size);
-#endif
-
   ////////////////////////////////
   // NOTE: UI rendering
   //
-  G_InputState *in = ctx->input;
-  local_persist B32 note_guide = 0;
-  ui_begin_panel(ui, ctx, string_lit("debug panel"), 30.0f, 30.0f);
+  g_draw_text(ctx,
+              string_lit(c_str_fmt("Octave %d", octave_shift)),
+              state->outer_boundary_x + UI_PADDING,
+              state->outer_boundary_y + UI_PADDING,
+              52);
+  local_persist B32 note_guide = 1;
+  ui_begin_panel(ui, ctx, string_lit("debug panel"), 30.0f, state->outer_boundary_y);
   {
-    ui_label(ui, ctx, string_lit(c_str_fmt("delta: %.4f", delta_time)));
     ui_label(ui, ctx, string_lit(c_str_fmt("fps: %d", fps)));
-    ui_checkbox(ui, ctx, string_lit("View note guide"), &note_guide);
-    if (octave_shift > 0)
-    {
-      ui_label(ui, ctx, string_lit(c_str_fmt("octave: %d", octave_shift)));
-    }
+    ui_label(ui, ctx, string_lit(c_str_fmt("delta: %.4f", delta_time)));
+    ui_checkbox(ui, ctx, string_lit("keymap guide panel"), &note_guide);
   }
   ui_end_panel(ui, ctx);
+
   if (note_guide)
   {
-    ui_begin_panel(ui, ctx, string_lit("keymap guide"), 400.0f, 500.0f);
+    ui_begin_panel(ui,
+                   ctx,
+                   string_lit("keymap guide"),
+                   ui->cursor_x - UI_PADDING,
+                   state->outer_boundary_y + UI_DEFAULT_PANEL_HEIGHT + UI_DEFAULT_PANEL_TITLE_BAR_HEIGHT + UI_PADDING);
     {
-      for (U64 idx = 0; idx < 10; idx++)
+      for (U64 idx = 0; idx < array_count(audio_note_lookup); idx++)
       {
         ui_keymap_hint(ui,
                        ctx,
@@ -304,7 +298,7 @@ g_draw_circle_ex(G_Context *ctx, I32 center_x, I32 center_y, U32 radius, U32 thi
       inner_dx = (I32)sqrtf((F32)inner_dx2);
     }
 
-    for (I32 x = inner_dx; x <= outer_dx; x++)
+    for (F32 x = inner_dx + 0.5f; x <= outer_dx; x++)
     {
       SDL_RenderPoint(ctx->renderer, center_x + x, center_y + y);
       SDL_RenderPoint(ctx->renderer, center_x - x, center_y + y);

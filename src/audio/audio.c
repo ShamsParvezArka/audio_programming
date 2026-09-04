@@ -15,7 +15,7 @@ audio_note_lookup_init(void)
   audio_note_lookup[9]  = (AudioNote){G_InputMap_A,  27.50f, 0.0f, 0.0f, 0, string_lit("NOTE A")};
   audio_note_lookup[10] = (AudioNote){G_InputMap_As, 29.14f, 0.0f, 0.0f, 0, string_lit("NOTE A#")};
   audio_note_lookup[11] = (AudioNote){G_InputMap_B,  30.87f, 0.0f, 0.0f, 0, string_lit("NOTE B")};
-  audio_note_lookup[12] = (AudioNote){G_InputMap_Cn, 32.70f, 0.0f, 0.0f, 0, string_lit("NOTE C NEXT OCTAVE")};
+  audio_note_lookup[12] = (AudioNote){G_InputMap_Cn, 32.70f, 0.0f, 0.0f, 0, string_lit("NOTE C(UP)")};
 };
 
 internal void
