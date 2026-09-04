@@ -98,6 +98,7 @@ internal void ui_begin_same_line(UI_Context *ui);
 internal void ui_end_same_line(UI_Context *ui);
 internal void ui_advance(UI_Context *ui, F32 width, F32 height);
 internal void ui_image(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, F32 scale);
+internal void ui_keymap_hint(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, U64 row, U64 col, U64 size, String label);
 
 internal F32 ui_get_text_width(UI_Context *ui, String label, F32 font_size);
 

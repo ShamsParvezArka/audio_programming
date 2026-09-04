@@ -1,5 +1,4 @@
-global I32 octave_shift = 0;
-
+global I32 octave_shift = 4;
 global F32 accumulated_time = 0.0f;
 global F64 frame_count = 0;
 global U64 fps = 0;
@@ -34,11 +33,15 @@ g_update(G_Context *ctx, G_State *state, F32 delta_time)
   G_InputState *in = ctx->input;
   if (in->kbd_down[G_InputMap_OctaveUpShifter])
   {
-    octave_shift = 1;
+    octave_shift = 5;
+  }
+  else if (in->kbd_down[G_InputMap_OctaveDownShifter])
+  {
+    octave_shift = 3;
   }
   else
   {
-    octave_shift = 0;
+    octave_shift = 4;
   }
 
   for (U64 idx = 0; idx < array_count(audio_note_lookup); idx++)
@@ -163,21 +166,36 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
   ////////////////////////////////
   // NOTE: UI rendering
   //
+  G_InputState *in = ctx->input;
+  local_persist B32 note_guide = 0;
   ui_begin_panel(ui, ctx, string_lit("debug panel"), 30.0f, 30.0f);
   {
     ui_label(ui, ctx, string_lit(c_str_fmt("delta: %.4f", delta_time)));
     ui_label(ui, ctx, string_lit(c_str_fmt("fps: %d", fps)));
+    ui_checkbox(ui, ctx, string_lit("View note guide"), &note_guide);
     if (octave_shift > 0)
     {
-      ui_label(ui, ctx, string_lit(c_str_fmt("Octave: +%d", octave_shift)));
+      ui_label(ui, ctx, string_lit(c_str_fmt("octave: %d", octave_shift)));
     }
-    else
-    {
-      ui_label(ui, ctx, string_lit(c_str_fmt("Octave: %d", octave_shift)));
-    }
-
   }
   ui_end_panel(ui, ctx);
+  if (note_guide)
+  {
+    ui_begin_panel(ui, ctx, string_lit("keymap guide"), 400.0f, 500.0f);
+    {
+      for (U64 idx = 0; idx < 10; idx++)
+      {
+        ui_keymap_hint(ui,
+                       ctx,
+                       ctx->keymap_spritesheet,
+                       in->kbd_down[audio_note_lookup[idx].associated_key] ? 1 : 0,
+                       idx,
+                       22,
+                       audio_note_lookup[idx].note_name);
+      }
+    }
+    ui_end_panel(ui, ctx);
+  }
 
   SDL_RenderPresent(ctx->renderer);
 }

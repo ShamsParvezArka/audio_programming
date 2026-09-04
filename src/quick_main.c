@@ -64,6 +64,10 @@ quick_entry_point(void)
   ctx->font->offset = 3;
   SDL_SetTextureScaleMode(ctx->font->tex, SDL_SCALEMODE_NEAREST);
 
+  ctx->keymap_spritesheet = IMG_LoadTexture(ctx->renderer, "../assets/keymap.png");
+  ctx->keymap_width = 48;
+  ctx->keymap_height = 48;
+
   UI_Context *ui = arena_push_struct(game_memory, UI_Context);
   ui->font = ctx->font ;
   ui_init_style(ui);
@@ -85,6 +89,7 @@ quick_entry_point(void)
   ctx->audio_spec->freq = AUDIO_SAMPLE_RATE;
   ctx->audio_spec->channels = AudioChannel_Mono;
 
+  audio_note_lookup_init();
   SDL_AudioStream *audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
                                                             ctx->audio_spec,
                                                             audio_callback,

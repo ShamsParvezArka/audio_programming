@@ -11,11 +11,6 @@
     }                                                   \
   } while (0)
 
-#define KeyboardDown(sc, in) do { (in)->kbd_down[(sc)] = true; if (!(in)->kbd_pressed[(sc)]) (in)->kbd_pressed[(sc)] = true; } while (0)
-#define KeyboardUp(sc, in)   do { (in)->kbd_down[(sc)] = false; (in)->kbd_released[(sc)] = true; } while (0)
-#define MouseDown(btn, in)   do { (in)->mouse_down[(btn)] = true; if (!(in)->mouse_pressed[(btn)]) (in)->mouse_pressed[(btn)] = true; } while (0)
-#define MouseUp(btn, in)     do { (in)->mouse_down[(btn)] = false; (in)->mouse_released[(btn)] = true; } while (0)
-
 typedef struct G_Config G_Config;
 struct G_Config
 {
@@ -41,6 +36,7 @@ struct G_Context
   SDL_Window    *window;
   SDL_Renderer  *renderer;
   SDL_AudioSpec *audio_spec;
+  SDL_Texture   *keymap_spritesheet;
 
   G_FontAtlas  *font;
   G_InputState *input;
@@ -49,6 +45,8 @@ struct G_Context
   U8 *window_title;
   I32 window_width;
   I32 window_height;
+  I32 keymap_width;
+  I32 keymap_height;
 };
 
 typedef struct G_Camera G_Camera;

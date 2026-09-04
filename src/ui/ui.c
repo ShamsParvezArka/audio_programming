@@ -583,3 +583,26 @@ ui_image(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, F32 scale)
   SDL_RenderTexture(ctx->renderer, texture, &src, &dst);
   ui_advance(ui, dst.w, dst.h);
 }
+
+internal void
+ui_keymap_hint(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, U64 row, U64 col, U64 size, String label)
+{
+  F32 texture_width  = 0.0f;
+  F32 texture_height = 0.0f;
+  SDL_GetTextureSize(texture, &texture_width, &texture_height);
+
+  SDL_FRect src =
+  {
+    .x = 0.0f + ctx->keymap_width * col,
+    .y = 0.0f + row * ctx->keymap_height,
+    .h = ctx->keymap_width,
+    .w = ctx->keymap_height
+  };
+  SDL_FRect dst = {ui->cursor_x, ui->cursor_y, size, size};
+  SDL_RenderTexture(ctx->renderer, texture, &src, &dst);
+
+  SDL_FRect rect = {dst.x + size + UI_PADDING, dst.y, ui_get_text_width(ui, label, UI_FONT_SIZE), size};
+  ui_draw_label_in_rect(ui, ctx, label, rect, UI_FONT_SIZE, 0);
+
+  ui_advance(ui, dst.w + rect.w, rect.h);
+}

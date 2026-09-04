@@ -29,16 +29,7 @@ struct HashTable
 #if BUILD_CONSOLE_INTERFACE
 I32 wmain(I32 argc, wchar_t **argv, wchar_t **envp)
 {
-  Arena *scratch = arena_alloc(MB(10));
-  HashTable table = {};
-  ht_insert(scratch, table, string_lit("hello"), 3);
-  ht_insert(scratch, table, string_lit("hello"), 3);
-  ht_insert(scratch, table, string_lit("world"), 1);
-  ht_insert(scratch, table, string_lit("how"), 4);
-  ht_insert(scratch, table, string_lit("are"), 1);
-  ht_insert(scratch, table, string_lit("you"), 4);
-
-  //quick_entry_point();
+  quick_entry_point();
   return 0;
 }
 #else
