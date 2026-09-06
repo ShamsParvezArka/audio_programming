@@ -157,7 +157,7 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
   //
   g_draw_text(ctx,
               string_lit(c_str_fmt("Octave %d", octave_shift)),
-              state->outer_boundary_x + UI_PADDING,
+              state->outer_boundary_x + state->outer_boundary_width - 250.0f,
               state->outer_boundary_y + UI_PADDING,
               52);
   local_persist B32 note_guide = 1;
@@ -165,6 +165,17 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
   {
     ui_label(ui, ctx, string_lit(c_str_fmt("fps: %d", fps)));
     ui_label(ui, ctx, string_lit(c_str_fmt("delta: %.4f", delta_time)));
+
+    ui_blank_space(ui, ctx, UI_DEFAULT_BLANK_SPACE_SIZE);
+
+    ui_label(ui, ctx, string_lit("AUDIO GAIN"));
+    if (ui_slider(ui, ctx, string_lit(": f32"), &audio_gain, 0.0f, 1.0f))
+    {
+      SDL_SetAudioStreamGain(ctx->audio_stream, audio_gain);
+    }
+
+    ui_blank_space(ui, ctx, UI_DEFAULT_BLANK_SPACE_SIZE * 2);
+
     ui_checkbox(ui, ctx, string_lit("keymap guide panel"), &note_guide);
   }
   ui_end_panel(ui, ctx);
@@ -187,6 +198,24 @@ g_render(G_Context *ctx, G_State *state, UI_Context *ui, F32 delta_time)
                        22,
                        audio_note_lookup[idx].note_name);
       }
+
+      ui_blank_space(ui, ctx, UI_DEFAULT_BLANK_SPACE_SIZE * 2);
+
+      ui_keymap_hint(ui,
+                     ctx,
+                     ctx->keymap_spritesheet,
+                     in->kbd_down[G_InputMap_OctaveUpShifter] ? 1 : 0,
+                     array_count(audio_note_lookup) + 1,
+                     22,
+                     string_lit("OCTAVE SHIFT(UP)"));
+      ui_keymap_hint(ui,
+                     ctx,
+                     ctx->keymap_spritesheet,
+                     in->kbd_down[G_InputMap_OctaveDownShifter] ? 1 : 0,
+                     array_count(audio_note_lookup),
+                     22,
+                     string_lit("OCTAVE SHIFT(DOWN)"));
+
     }
     ui_end_panel(ui, ctx);
   }

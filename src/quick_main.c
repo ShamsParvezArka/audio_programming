@@ -2,7 +2,7 @@
 #  define USE_VIRTUAL_RESOLUTION false
 #endif
 
-global B32 running = true;
+global B32 running = 1;
 global F32 time = 0;
 
 internal void
@@ -32,6 +32,7 @@ quick_entry_point(void)
                               flags,
                               &ctx->window,
                               &ctx->renderer);
+  SDL_SetWindowResizable(ctx->window, 0);
   SDL_SetRenderVSync(ctx->renderer, 1);
   SDL_SetRenderDrawBlendMode(ctx->renderer, SDL_BLENDMODE_BLEND);
 
@@ -77,10 +78,12 @@ quick_entry_point(void)
   state->camera->zoom = 1.0f;
   state->camera->zoom_target = 1.0f;
 
-  state->outer_boundary_width = ctx->window_width * 0.8f;
+  state->outer_boundary_width = ctx->window_width * 0.7f;
   state->outer_boundary_height = ctx->window_height * 0.9f;
-  state->line_pos_x1 = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f;
-  state->line_pos_y1 = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
+  state->outer_boundary_x = ctx->window_width / 2.0f - state->outer_boundary_width / 2.0f + 100;
+  state->outer_boundary_y = ctx->window_height / 2.0f - state->outer_boundary_height / 2.0f;
+  state->line_pos_x1 = state->outer_boundary_x;
+  state->line_pos_y1 = state->outer_boundary_y;
   state->line_pos_x2 = state->line_pos_x1;
   state->line_pos_y2 = state->line_pos_y1 + state->outer_boundary_height;
 
@@ -90,11 +93,11 @@ quick_entry_point(void)
   ctx->audio_spec->channels = AudioChannel_Mono;
 
   audio_note_lookup_init();
-  SDL_AudioStream *audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
-                                                            ctx->audio_spec,
-                                                            audio_callback,
-                                                            0);
-  SDL_ResumeAudioStreamDevice(audio_stream);
+  ctx->audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+                                                ctx->audio_spec,
+                                                audio_callback,
+                                                0);
+  SDL_ResumeAudioStreamDevice(ctx->audio_stream);
 
   while (running)
   {

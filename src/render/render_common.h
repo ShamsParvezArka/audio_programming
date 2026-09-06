@@ -36,10 +36,11 @@ struct G_FontAtlas
 typedef struct G_Context G_Context;
 struct G_Context
 {
-  SDL_Window    *window;
-  SDL_Renderer  *renderer;
-  SDL_AudioSpec *audio_spec;
-  SDL_Texture   *keymap_spritesheet;
+  SDL_Window      *window;
+  SDL_Renderer    *renderer;
+  SDL_AudioSpec   *audio_spec;
+  SDL_AudioStream *audio_stream;
+  SDL_Texture     *keymap_spritesheet;
 
   G_FontAtlas  *font;
   G_InputState *input;
