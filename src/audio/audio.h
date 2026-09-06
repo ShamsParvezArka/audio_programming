@@ -3,6 +3,8 @@
 
 #define AUDIO_SAMPLE_RATE 48000
 #define NOTE_VOICE_GAIN 0.125f
+#define AUDIO_ATTACK_RATE 0.008f
+#define AUDIO_RELEASE_RATE 0.004f
 
 typedef enum AudioChannel AudioChannel;
 enum AudioChannel
@@ -21,8 +23,6 @@ struct AudioNote
   B32 active;
   String note_name;
 };
-
-global AudioNote audio_note_lookup[13] = {};
 
 internal void audio_note_lookup_init(void);
 internal void audio_callback(void *userdata, SDL_AudioStream *stream, I32 additional_amount, I32 total_amount);
