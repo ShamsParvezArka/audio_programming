@@ -10,6 +10,8 @@
 #define UI_DEFAULT_PANEL_HEIGHT 280
 #define UI_DEFAULT_PANEL_TITLE_BAR_HEIGHT 28
 
+#define UI_DEFAULT_BLANK_SPACE_SIZE 10
+
 #ifndef UI_FONT_SIZE
 #  define UI_FONT_SIZE 22.0f
 #endif
@@ -101,6 +103,7 @@ internal void ui_end_same_line(UI_Context *ui);
 internal void ui_advance(UI_Context *ui, F32 width, F32 height);
 internal void ui_image(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, F32 scale);
 internal void ui_keymap_hint(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, U64 row, U64 col, U64 size, String label);
+internal void ui_blank_space(UI_Context *ui, G_Context *ctx, F32 size);
 
 internal F32 ui_get_text_width(UI_Context *ui, String label, F32 font_size);
 

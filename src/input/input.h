@@ -43,6 +43,7 @@ enum G_InputMap
   G_InputMap_As = SDL_SCANCODE_J,
   G_InputMap_B  = SDL_SCANCODE_M,
   G_InputMap_Cn = SDL_SCANCODE_COMMA,
+
   G_InputMap_OctaveUpShifter   = SDL_SCANCODE_BACKSLASH,
   G_InputMap_OctaveDownShifter = SDL_SCANCODE_RETURN
 };

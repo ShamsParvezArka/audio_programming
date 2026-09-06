@@ -606,3 +606,9 @@ ui_keymap_hint(UI_Context *ui, G_Context *ctx, SDL_Texture *texture, U64 row, U6
 
   ui_advance(ui, dst.w + rect.w, rect.h);
 }
+
+internal void
+ui_blank_space(UI_Context *ui, G_Context *ctx, F32 size)
+{
+  ui_advance(ui, size, size);
+}
