@@ -37,5 +37,4 @@ internal void
 arena_release(Arena *arena)
 {
   memory_release(arena->base, 0);
-  memory_release(arena, 0);
 }
